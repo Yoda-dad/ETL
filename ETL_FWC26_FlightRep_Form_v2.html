@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETL | FWC26 Flight Rep Quiz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f3f2f1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+
+/* Progress bar at top */
+.top-bar{width:100%;max-width:680px;margin-bottom:20px;}
+.top-title{font-size:13px;color:#605e5c;margin-bottom:6px;display:flex;justify-content:space-between;}
+.prog-track{height:6px;background:#edebe9;border-radius:3px;}
+.prog-fill{height:6px;background:#0078d4;border-radius:3px;transition:width 0.4s;}
+
+/* Card */
+.card{width:100%;max-width:680px;background:white;border-radius:4px;box-shadow:0 1.6px 3.6px rgba(0,0,0,.13),0 .3px .9px rgba(0,0,0,.11);overflow:hidden;}
+.card-header{background:#0078d4;padding:24px 28px 20px;}
+.card-header .brand{font-size:12px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.card-header h1{font-size:22px;font-weight:600;color:white;line-height:1.3;}
+.card-header .sub{font-size:13px;color:rgba(255,255,255,0.8);margin-top:6px;}
+
+/* Question area */
+.q-area{padding:28px 28px 20px;}
+.q-meta{display:flex;gap:10px;align-items:center;margin-bottom:16px;}
+.phase-tag{background:#e8f5e9;color:#0078d4;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px;}
+.q-num{font-size:12px;color:#605e5c;}
+.checklist-ref{background:#f3f2f1;border-left:3px solid #0078d4;padding:8px 14px;font-size:12.5px;color:#323130;margin-bottom:18px;border-radius:0 4px 4px 0;}
+.checklist-ref strong{color:#0078d4;font-size:11px;display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.4px;}
+.q-text{font-size:16px;color:#201f1e;line-height:1.6;margin-bottom:20px;font-weight:400;}
+.q-area label{font-size:12px;color:#605e5c;font-weight:600;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;}
+.q-area textarea{width:100%;border:1px solid #8a8886;border-radius:2px;padding:10px 12px;font-size:14px;font-family:'Segoe UI',Arial,sans-serif;resize:vertical;min-height:90px;color:#201f1e;outline:none;transition:border 0.15s;}
+.q-area textarea:focus{border-color:#0078d4;box-shadow:0 0 0 1px #0078d4;}
+
+/* Sample answer reveal */
+.sample-box{display:none;margin-top:20px;background:#fff9c4;border:1px solid #f9a825;border-radius:4px;padding:16px 18px;}
+.sample-box .sl{font-size:11px;font-weight:600;color:#f57f17;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.sample-box .sa{font-size:14px;color:#5d4037;font-style:italic;line-height:1.6;}
+.compare-note{font-size:12px;color:#605e5c;margin-top:8px;}
+
+/* Buttons */
+.btn-row{padding:16px 28px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #edebe9;align-items:center;}
+.btn-row .q-counter{margin-right:auto;font-size:12px;color:#605e5c;}
+.btn{padding:8px 20px;border-radius:2px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:'Segoe UI',Arial,sans-serif;}
+.btn-primary{background:#0078d4;color:white;}
+.btn-primary:hover{background:#7FBC00;}
+.btn-secondary{background:white;color:#0078d4;border:1px solid #0078d4;}
+.btn-secondary:hover{background:#f3f2f1;}
+.btn:disabled{opacity:0.5;cursor:default;}
+
+/* Splash / End screens */
+.splash,.end-screen{width:100%;max-width:680px;}
+.end-screen{display:none;}
+
+.end-card{background:white;border-radius:4px;box-shadow:0 1.6px 3.6px rgba(0,0,0,.13);overflow:hidden;}
+.end-header{background:#0078d4;padding:28px;text-align:center;color:white;}
+.end-header h2{font-size:26px;font-weight:600;margin-bottom:6px;}
+.end-header p{font-size:14px;opacity:0.85;}
+.end-body{padding:28px;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+.stat{background:#f3f2f1;border-radius:4px;padding:18px;text-align:center;}
+.stat .sv{font-size:32px;font-weight:700;color:#0078d4;}
+.stat .sl{font-size:12px;color:#605e5c;margin-top:4px;}
+.result-msg{background:#e8f5e9;border-radius:4px;padding:16px;font-size:14px;color:#1b5e20;line-height:1.6;margin-bottom:20px;}
+.review-list{max-height:320px;overflow-y:auto;}
+.review-item{padding:14px 0;border-bottom:1px solid #edebe9;}
+.review-item:last-child{border-bottom:none;}
+.review-item .ri-q{font-size:13px;color:#323130;margin-bottom:6px;}
+.review-item .ri-a{font-size:12.5px;color:#5d4037;font-style:italic;background:#fff9c4;padding:6px 10px;border-radius:3px;}
+.review-item .ri-label{font-size:11px;font-weight:600;color:#0078d4;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+.end-btns{padding:0 28px 28px;display:flex;gap:10px;justify-content:center;}
+
+/* Splash */
+.splash-card{background:white;border-radius:4px;box-shadow:0 1.6px 3.6px rgba(0,0,0,.13);overflow:hidden;}
+.splash-header{background:#0078d4;padding:32px 28px;color:white;text-align:center;}
+.splash-header h1{font-size:26px;font-weight:600;margin-bottom:8px;}
+.splash-header p{font-size:14px;opacity:0.85;line-height:1.6;}
+.splash-body{padding:28px;}
+.splash-body p{font-size:14px;color:#323130;line-height:1.7;margin-bottom:16px;}
+.splash-brief{background:#f3f2f1;border-radius:4px;padding:16px;margin-bottom:20px;}
+.splash-brief .sb-title{font-size:11px;font-weight:600;color:#0078d4;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+.splash-brief table{width:100%;border-collapse:collapse;}
+.splash-brief td{font-size:13px;padding:4px 8px;color:#323130;}
+.splash-brief td:first-child{font-weight:600;color:#605e5c;width:120px;}
+.splash-start{background:#0078d4;color:white;border:none;border-radius:2px;padding:12px 28px;font-size:15px;font-weight:600;cursor:pointer;width:100%;font-family:'Segoe UI',Arial,sans-serif;}
+.splash-start:hover{background:#7FBC00;}
+
+@media(max-width:500px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .q-area{padding:20px 18px 16px;}
+  .btn-row{padding:14px 18px 20px;}
+  .card-header{padding:18px 18px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <div class="splash-card">
+    <div class="splash-header">
+      <h1>FWC26 Team Charter</h1>
+      <p>ETL Flight Rep Practice — WhatsApp Updates Practice</p>
+    </div>
+    <div class="splash-body">
+      <p>This quiz covers the <strong>16 mandatory WhatsApp updates</strong> required during a FWC26 Team Charter operation. Each question presents a real scenario — write the message you would send on the ops group, then submit to see the sample answer.</p>
+      <div class="splash-brief">
+        <div class="sb-title">Your flight brief</div>
+        <table>
+          <tr><td>Flight</td><td>DL4701</td></tr>
+          <tr><td>Tail</td><td>N904DE</td></tr>
+          <tr><td>Route</td><td>Vancouver (YVR) → Dallas Fort Worth (DFW)</td></tr>
+          <tr><td>STD</td><td>10:15</td></tr>
+          <tr><td>FBO</td><td>Signature Flight Support, YVR</td></tr>
+          <tr><td>Passengers</td><td>42</td></tr>
+          <tr><td>Bags</td><td>96</td></tr>
+          <tr><td>ETM</td><td>FBO Contact</td></tr>
+        </table>
+      </div>
+      <button class="splash-start" onclick="startQuiz()">Begin Practice ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="top-bar" id="top-bar" style="display:none;">
+  <div class="top-title">
+    <span id="prog-label">Question 1 of 16</span>
+    <span id="prog-phase">Departure</span>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div class="card" id="quiz-card" style="display:none;">
+  <div class="card-header">
+    <div class="brand">ETL · FWC26 Team Charter</div>
+    <h1>Flight Rep WhatsApp Practice</h1>
+    <div class="sub">Write your update as you would on a live ops WhatsApp group</div>
+  </div>
+  <div class="q-area">
+    <div class="q-meta">
+      <span class="phase-tag" id="q-phase">Departure</span>
+      <span class="q-num" id="q-num">Question 1 of 16</span>
+    </div>
+    <div class="checklist-ref">
+      <strong>Checklist item</strong>
+      <span id="q-checklist"></span>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <label for="q-input">Your WhatsApp update</label>
+    <textarea id="q-input" placeholder="Type your message here..."></textarea>
+    <div class="sample-box" id="sample-box">
+      <div class="sl">✅ Sample answer</div>
+      <div class="sa" id="sample-ans"></div>
+      <div class="compare-note">Compare your answer — did you include the flight number, tail, key times and counts?</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <span class="q-counter" id="q-counter">1 / 16</span>
+    <button class="btn btn-secondary" id="skip-btn" onclick="skipQ()">Example</button>
+    <button class="btn btn-primary" id="submit-btn" onclick="submitQ()">Submit answer</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextQ()" style="display:none;">Next question ›</button>
+  </div>
+</div>
+
+<!-- END -->
+<div class="end-screen" id="end-screen">
+  <div class="end-card">
+    <div class="end-header">
+      <div style="font-size:40px;margin-bottom:10px;" id="end-emoji">🏆</div>
+      <h2 id="end-title">Quiz Complete!</h2>
+      <p id="end-sub">FWC26 ETL Flight Rep Practice</p>
+    </div>
+    <div class="end-body">
+      <div class="stats-row">
+        <div class="stat"><div class="sv" id="es-answered">0</div><div class="sl">Answered</div></div>
+        <div class="stat"><div class="sv" id="es-skipped">0</div><div class="sl">Skipped</div></div>
+        <div class="stat"><div class="sv" id="es-total">16</div><div class="sl">Total questions</div></div>
+      </div>
+      <div class="result-msg" id="result-msg"></div>
+      <h3 style="font-size:14px;font-weight:600;color:#323130;margin-bottom:14px;">All sample answers for review</h3>
+      <div class="review-list" id="review-list"></div>
+    </div>
+    <div class="end-btns">
+      <button class="btn btn-secondary" onclick="restartQuiz()">🔄 Try again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS=[
+  {
+    phase:"Departure",
+    checklist:"Update WhatsApp Group that you have arrived",
+    q:"You have just arrived at Signature FBO, YVR at 06:45. STD for DL4701 is 10:15. What is your first mandatory WhatsApp update to the group?",
+    a:"Arrived Signature FBO YVR, 06:45. DL4701 / N904DE STD 10:15. Starting pre-flight checks."
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm the total number of bags checked into the hold and update on WhatsApp",
+    q:"Kit loading is complete on DL4701. All 96 bags are in the hold and wash bags were loaded last. What do you send on WhatsApp?",
+    a:"Loading complete DL4701. 96 bags in hold. Wash bags loaded last. ✔ Awaiting delegation."
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm on WhatsApp once Management/Staff arrive",
+    q:"Management and staff have just arrived at Signature YVR in a separate vehicle — not with the team. What do you send on WhatsApp?",
+    a:"Management/staff arrived Signature YVR — separate vehicle. DL4701. Coordinating escort to ramp now."
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm on WhatsApp once the Team bus arrives",
+    q:"The team bus has pulled into Signature FBO, YVR. What do you send on WhatsApp, and what is your immediate next action?",
+    a:"Team bus arrived Signature YVR. Escorting to ramp now. DL4701."
+  },
+  {
+    phase:"Departure",
+    checklist:"If required, update the total number of bags on WhatsApp (last-minute baggage)",
+    q:"Two last-minute bags have been brought by the team at the ramp. Both have been screened and loaded. The total is now 98 bags. What do you send on WhatsApp?",
+    a:"UPDATED BAG COUNT: 2 additional bags screened and loaded. New total: 98 bags in hold DL4701."
+  },
+  {
+    phase:"Departure",
+    checklist:"Update on WhatsApp once the Team have boarded",
+    q:"All team members are now on board DL4701. What do you send on WhatsApp?",
+    a:"Full team on board DL4701. ✔"
+  },
+  {
+    phase:"Departure",
+    checklist:"Update on WhatsApp when the doors are closed",
+    q:"The doors on Flight DL4701 have just been closed. What do you send on WhatsApp?",
+    a:"Doors closed on DL4701. ✔"
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm on WhatsApp the exact number of passengers and bags in the hold",
+    q:"Final check is done. There are 42 passengers on board and 98 bags in the hold (washbag in cabin). What do you send on WhatsApp?",
+    a:"FINAL CONFIRMATION DL4701: 42 pax on board. 98 bags in hold. Washbag in cabin. ✔"
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm on WhatsApp when the aircraft is off blocks",
+    q:"DL4701 has just gone off blocks at 10:08. What do you send on WhatsApp?",
+    a:"DL4701 off blocks 10:08. DL4701 YVR–DFW."
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm on WhatsApp the actual time of departure (ATD)",
+    q:"DL4701 is airborne. Actual time of departure is 10:12. What do you send on WhatsApp, and what do you ask ACS Ops to do?",
+    a:"ATD 10:12. DL4701 airborne YVR. ACS Ops — please share tracking link. ✈"
+  },
+  {
+    phase:"Departure",
+    checklist:"Confirm flight time and Estimated Time of Arrival (ETA)",
+    q:"The crew have confirmed the flight time is 10 hours 05 minutes. ETA at Dallas Fort Worth is 20:17 local time. What do you send on WhatsApp?",
+    a:"Flight time confirmed: 10h 05m. ETA DFW 20:17 local. DL4701."
+  },
+  {
+    phase:"Arrival",
+    checklist:"Confirm on WhatsApp once vehicles are in place airside",
+    q:"You are the arrival rep at DFW. All vehicles are confirmed in position airside. This is a mandatory checkpoint. What do you send on WhatsApp?",
+    a:"CONFIRMED: All vehicles in place airside DFW. ✔ DL4701 inbound."
+  },
+  {
+    phase:"Arrival",
+    checklist:"Confirm on WhatsApp once the team bus has left the apron",
+    q:"The team bus has departed the DFW apron with the full delegation on board. What do you send on WhatsApp?",
+    a:"Team bus departed DFW apron. Delegation on board. DL4701. ✔"
+  },
+  {
+    phase:"Arrival",
+    checklist:"Confirm via WhatsApp once baggage unloading has started",
+    q:"The hold on DL4701 has been opened and baggage unloading has started at DFW. What do you send on WhatsApp?",
+    a:"Baggage unloading commenced DL4701 DFW. Monitoring. ✔"
+  },
+  {
+    phase:"Arrival",
+    checklist:"Confirm via WhatsApp once baggage is loaded onto the truck",
+    q:"All 98 bags have been unloaded from DL4701 and loaded onto the baggage truck at DFW. What do you send on WhatsApp?",
+    a:"98 bags loaded onto baggage truck DFW. ✔ DL4701."
+  },
+  {
+    phase:"Arrival",
+    checklist:"Confirm on WhatsApp once truck and all delegation vehicles have left the apron airside",
+    q:"The baggage truck and all delegation vehicles have now cleared the DFW apron. This is the final mandatory update. What do you send on WhatsApp?",
+    a:"FINAL: Baggage truck and all delegation vehicles departed DFW apron airside. DL4701 complete. ✔"
+  }
+];
+
+let cur=0, answered=0, skipped=0, revealed=false;
+
+function startQuiz(){
+  document.getElementById('splash').style.display='none';
+  document.getElementById('top-bar').style.display='block';
+  document.getElementById('quiz-card').style.display='block';
+  loadQ(0);
+}
+
+function loadQ(idx){
+  if(idx>=SCENARIOS.length){endQuiz();return;}
+  const s=SCENARIOS[idx];
+  revealed=false;
+  document.getElementById('q-phase').textContent=s.phase;
+  document.getElementById('q-num').textContent=`Question ${idx+1} of ${SCENARIOS.length}`;
+  document.getElementById('q-counter').textContent=`${idx+1} / ${SCENARIOS.length}`;
+  document.getElementById('q-checklist').textContent=s.checklist;
+  document.getElementById('q-text').textContent=s.q;
+  document.getElementById('q-input').value='';
+  document.getElementById('q-input').style.borderColor='#8a8886';
+  document.getElementById('sample-box').style.display='none';
+  document.getElementById('sample-ans').textContent=`"${s.a}"`;
+  document.getElementById('submit-btn').style.display='';
+  document.getElementById('skip-btn').style.display='';
+  document.getElementById('next-btn').style.display='none';
+  document.getElementById('prog-label').textContent=`Question ${idx+1} of ${SCENARIOS.length}`;
+  document.getElementById('prog-phase').textContent=s.phase;
+  document.getElementById('prog-fill').style.width=Math.round((idx/SCENARIOS.length)*100)+'%';
+  document.getElementById('q-input').focus();
+}
+
+function submitQ(){
+  const val=document.getElementById('q-input').value.trim();
+  if(!val){
+    document.getElementById('q-input').style.borderColor='#a80000';
+    document.getElementById('q-input').focus();
+    return;
+  }
+  answered++;
+  revealSample();
+}
+
+function skipQ(){
+  skipped++;
+  revealSample();
+}
+
+function revealSample(){
+  revealed=true;
+  document.getElementById('sample-box').style.display='block';
+  document.getElementById('submit-btn').style.display='none';
+  document.getElementById('skip-btn').style.display='none';
+  document.getElementById('next-btn').style.display='';
+  document.getElementById('sample-box').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function nextQ(){
+  cur++;
+  loadQ(cur);
+}
+
+function endQuiz(){
+  document.getElementById('top-bar').style.display='none';
+  document.getElementById('quiz-card').style.display='none';
+  const es=document.getElementById('end-screen');
+  es.style.display='block';
+  document.getElementById('es-answered').textContent=answered;
+  document.getElementById('es-skipped').textContent=skipped;
+  document.getElementById('es-total').textContent=SCENARIOS.length;
+  const pct=Math.round((answered/SCENARIOS.length)*100);
+  let emoji='⭐', msg='';
+  if(pct>=85){emoji='🏆';msg='Outstanding performance. You\'re ready for live FWC26 charter operations. Make sure you always carry your flight brief and Hi-Vis vest.';}
+  else if(pct>=65){emoji='✅';msg='Good effort. Review the scenarios you skipped before your first live shift, and make sure you always include flight number, tail, times and counts in your updates.';}
+  else{emoji='📋';msg='Keep practising. Focus on including the key details in every update: flight number, tail number, exact times and exact counts. Use the sample answers as your guide.';}
+  document.getElementById('end-emoji').textContent=emoji;
+  document.getElementById('result-msg').textContent=msg;
+
+  const rl=document.getElementById('review-list');
+  rl.innerHTML='';
+  SCENARIOS.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='review-item';
+    d.innerHTML=`<div class="ri-label">${s.phase} · Q${i+1}</div><div class="ri-q">${s.checklist}</div><div class="ri-a">${s.a}</div>`;
+    rl.appendChild(d);
+  });
+  es.scrollIntoView({behavior:'smooth'});
+}
+
+function restartQuiz(){
+  cur=0;answered=0;skipped=0;revealed=false;
+  document.getElementById('end-screen').style.display='none';
+  document.getElementById('top-bar').style.display='block';
+  document.getElementById('quiz-card').style.display='block';
+  loadQ(0);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.ctrlKey){
+    if(!revealed) submitQ();
+    else nextQ();
+  }
+});
+</script>
+</body>
+</html>
